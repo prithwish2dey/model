@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        .form-container input,
+        .form-container select {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-container button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Time Prediction System</h1>
+
+    <!-- Unified Prediction Form -->
+    <div class="form-container">
+        
+        <form id="predictionForm">
+            <label for="visitNumber">Visit Number:</label>
+            <input type="number" id="visitNumber" name="visitNumber" required>
+
+            <label for="patientAge">Patient's Age (years):</label>
+            <input type="number" id="patientAge" name="patientAge" required>
+
+            <label for="patientSex">Patient's Sex (1 for Male, 2 for Female):</label>
+            <input type="number" id="patientSex" name="patientSex" required min="0" max="1">
+
+            <label for="symptoms">Symptoms (comma separated):</label>
+            <input type="text" id="symptoms" name="symptoms" placeholder="e.g., itching, skin_rash, stomach_pain" required>
+
+            <button type="submit">Predict Time</button>
+        </form>
+    </div>
+
+    <!-- Result Section -->
+    <div id="result">
+        <h3>Results:</h3>
+        <p id="timeResult"></p>
+        <p id="diseaseResult"></p>
+    </div>
+
+    <script>
+        // Handle unified prediction form submission
+        document.getElementById('predictionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Get form data
+            const visitNumber = document.getElementById('visitNumber').value;
+            const patientAge = document.getElementById('patientAge').value;
+            const patientSex = document.getElementById('patientSex').value;
+            const symptomsInput = document.getElementById('symptoms').value;
+            const symptomsList = symptomsInput.split(',').map(symptom => symptom.trim());
+
+            // Create payload for disease prediction
+            const payload = { symptoms: symptomsList };
+
+            // Make the POST request to Flask server for disease prediction
+            fetch('/predict_disease_and_time', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    visitNumber: visitNumber,
+                    patientAge: patientAge,
+                    patientSex: patientSex,
+                    symptoms: symptomsList
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data['error']) {
+                    document.getElementById('timeResult').textContent = `Error: ${data['error']}`;
+                    document.getElementById('diseaseResult').textContent = `Error: ${data['error']}`;
+                } else {
+                    //document.getElementById('diseaseResult').textContent = `Predicted Disease: ${data['Predicted Disease']}`;
+                    document.getElementById('timeResult').textContent = `Predicted Time Taken: ${data['Predicted Time Taken (seconds)']} seconds`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('timeResult').textContent = `Error: ${error.message}`;
+                document.getElementById('diseaseResult').textContent = `Error: ${error.message}`;
+            });
+        });
+    </script>
+    
+</body>
+</html>
